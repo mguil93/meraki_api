@@ -1,17 +1,23 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import requests
 import os
 
 app = Flask(__name__)
 
-# Get API key from Render environment variables
-MERAKI_API_KEY = os.getenv("66543d94de5e4baf371c5bc2b7f6a3d4166e1b9d")
+# ✅ Load Meraki API Key from environment variables
+MERAKI_API_KEY = os.getenv("MERAKI_API_KEY")
+
+# ✅ Check if API key is set
+if not MERAKI_API_KEY:
+    raise ValueError("❌ ERROR: MERAKI_API_KEY is not set. Please add it to environment variables.")
+
+# ✅ Headers for Meraki API requests
 HEADERS = {"X-Cisco-Meraki-API-Key": MERAKI_API_KEY, "Content-Type": "application/json"}
 
-# Replace with your Meraki Organization ID
+# ✅ Replace with your actual Meraki Organization ID
 MERAKI_ORG_ID = "983899"
 
-# Fetch Meraki Network List
+# ✅ Fetch Meraki Network List
 @app.route('/meraki/networks', methods=['GET'])
 def get_networks():
     url = f"https://api.meraki.com/api/v1/organizations/{MERAKI_ORG_ID}/networks"
@@ -19,7 +25,12 @@ def get_networks():
 
     if response.status_code == 200:
         return jsonify(response.json())
-    return jsonify({"error": "Failed to fetch networks", "status": response.status_code})
+    else:
+        return jsonify({"error": f"Failed to fetch networks: {response.status_code}", "details": response.text})
 
+# ✅ Dynamic port assignment for Render deployment
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5002, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Render dynamically assigns a port
+    app.run(host="0.0.0.0", port=port, debug=True)
+
+
